@@ -9,7 +9,8 @@
 #include "bit.h"
 #include "control.h"
 
-static uint8_t* get_first_minor(struct fpga_bits* bits, int row, int major)
+static uint8_t* get_first_minor(struct fpga_bits* const bits,
+                                const int row, const int major)
 {
 	int i, num_frames;
 
@@ -20,22 +21,22 @@ static uint8_t* get_first_minor(struct fpga_bits* bits, int row, int major)
 	return &bits->d[(row*FRAMES_PER_ROW + num_frames)*FRAME_SIZE];
 }
 
-static int get_bit(struct fpga_bits* bits,
-	int row, int major, int minor, int bit_i)
+static int get_bit(struct fpga_bits* const bits,
+	const int row, const int major, const int minor, const int bit_i)
 {
 	return frame_get_bit(get_first_minor(bits, row, major)
 		+ minor*FRAME_SIZE, bit_i);
 }
 
-static void set_bit(struct fpga_bits* bits,
-	int row, int major, int minor, int bit_i)
+static void set_bit(struct fpga_bits* const bits,
+	const int row, const int major, const int minor, const int bit_i)
 {
 	return frame_set_bit(get_first_minor(bits, row, major)
 		+ minor*FRAME_SIZE, bit_i);
 }
 
-static void clear_bit(struct fpga_bits* bits,
-	int row, int major, int minor, int bit_i)
+static void clear_bit(struct fpga_bits* const bits,
+	const int row, const int major, const int minor, const int bit_i)
 {
 	return frame_clear_bit(get_first_minor(bits, row, major)
 		+ minor*FRAME_SIZE, bit_i);
@@ -49,17 +50,18 @@ struct bit_pos
 	int bit_i;
 };
 
-static int get_bitp(struct fpga_bits* bits, struct bit_pos* pos)
+static int get_bitp(struct fpga_bits* const bits,
+                    const struct bit_pos* const pos)
 {
 	return get_bit(bits, pos->row, pos->major, pos->minor, pos->bit_i);
 }
 
-static void set_bitp(struct fpga_bits* bits, struct bit_pos* pos)
+static void set_bitp(struct fpga_bits* const bits, const struct bit_pos* const pos)
 {
 	set_bit(bits, pos->row, pos->major, pos->minor, pos->bit_i);
 }
 
-static void clear_bitp(struct fpga_bits* bits, struct bit_pos* pos)
+static void clear_bitp(struct fpga_bits* const bits, const struct bit_pos* const pos)
 {
 	clear_bit(bits, pos->row, pos->major, pos->minor, pos->bit_i);
 }
@@ -90,7 +92,8 @@ struct extract_state
 	struct sw_yxpos yx_pos[MAX_YX_SWITCHES]; // needs to be dynamically alloced...
 };
 
-static int find_es_switch(struct extract_state* es, int y, int x, swidx_t sw)
+static int find_es_switch(const struct extract_state* const es,
+                          const int y, const int x, const swidx_t sw)
 {
 	int i;
 
@@ -105,7 +108,8 @@ static int find_es_switch(struct extract_state* es, int y, int x, swidx_t sw)
 	return 0;
 }
 
-static int write_type2(struct fpga_bits* bits, struct fpga_model* model)
+static int write_type2(/* not const */ struct fpga_bits* const bits,
+                       /* not checked for const */ struct fpga_model* const model)
 {
 	int i, y, x, type_idx, part_idx, dev_idx, first_iob, rc;
 	struct fpga_device* dev;
@@ -267,7 +271,7 @@ fail:
 	return rc;
 }
 
-static int extract_iobs(struct extract_state* es)
+static int extract_iobs(/* not checked for const */ struct extract_state* const es)
 {
 	int i, iob_y, iob_x, iob_idx, dev_idx, first_iob, rc;
 	uint64_t u64;
@@ -569,7 +573,7 @@ fail:
 	return rc;
 }
 
-static int extract_type2(struct extract_state* es)
+static int extract_type2( /* not checked for const */ struct extract_state* const es)
 {
 	int gclk_i, bits_off;
 	uint16_t u16;
@@ -642,8 +646,10 @@ static int extract_type2(struct extract_state* es)
 	RC_RETURN(es->model);
 }
 
-static int lut2str(uint64_t lut, int lut_pos, int lut5_used,
-	char *lut6_buf, char** lut6_p, char *lut5_buf, char** lut5_p)
+static int lut2str( /* const not checked */ uint64_t lut,
+	const int lut_pos, const int lut5_used,
+	/* not const */ char * const lut6_buf, char* /* not const */ * const lut6_p,
+	/* not const */ char * const lut5_buf, char* /* not const */ * const lut5_p)
 {
 	int lut_map[64], rc;
 	uint64_t lut_mapped;
@@ -677,7 +683,7 @@ fail:
 	return rc;
 }
 
-static int extract_logic(struct extract_state* es)
+static int extract_logic( /* const not checked */ struct extract_state* const es)
 {
 	int row, row_pos, x, y, i, byte_off, last_minor, lut5_used, rc;
 	int latch_ml, latch_x, l_col, lut;
@@ -1441,8 +1447,10 @@ fail:
 	return rc;
 }
 
-static int bitpos_is_set(struct extract_state *es, int y, int x,
-	struct xc6_routing_bitpos *swpos, int *is_set)
+static int bitpos_is_set( /* const not checked */ struct extract_state * const es,
+        const int y, const int x,
+	const struct xc6_routing_bitpos *const swpos,
+	/* not const */ int * const is_set)
 {
 	int row_num, row_pos, start_in_frame, two_bits_val, rc;
 
@@ -1487,8 +1495,9 @@ fail:
 	return rc;
 }
 
-static int bitpos_clear_bits(struct extract_state* es, int y, int x,
-	struct xc6_routing_bitpos* swpos)
+static int bitpos_clear_bits(/* not const */ struct extract_state* const es,
+	const int y, const int x,
+	const struct xc6_routing_bitpos* const swpos)
 {
 	int row_num, row_pos, start_in_frame, rc;
 
@@ -1521,8 +1530,9 @@ fail:
 	return rc;
 }
 
-static int bitpos_set_bits(struct fpga_bits* bits, struct fpga_model* model,
-	int y, int x, struct xc6_routing_bitpos* swpos)
+static int bitpos_set_bits(/* const not checked */ struct fpga_bits* const bits,
+	/* const not checked */ struct fpga_model* const model,
+	const int y, const int x, const struct xc6_routing_bitpos* const swpos)
 {
 	int row_num, row_pos, start_in_frame, rc;
 
@@ -1559,7 +1569,8 @@ fail:
 	return rc;
 }
 
-static int extract_routing_switches(struct extract_state* es, int y, int x)
+static int extract_routing_switches(/* const not checked */ struct extract_state* const es,
+	const int y, const int x)
 {
 	struct fpga_tile* tile;
 	swidx_t sw_idx;
@@ -1595,7 +1606,8 @@ static int extract_routing_switches(struct extract_state* es, int y, int x)
 	RC_RETURN(es->model);
 }
 
-static int extract_logic_switches(struct extract_state* es, int y, int x)
+static int extract_logic_switches(/* const not checked */ struct extract_state* const es,
+	const int y, const int x)
 {
 	int row, row_pos, byte_off, minor, rc;
 	uint8_t* u8_p;
@@ -1790,8 +1802,8 @@ struct iologic_sw_pos s_bot_outer_io_swpos[] =
 	{{0}}
 };
 
-static int add_yx_switch(struct extract_state *es,
-	int y, int x, const char *from, const char *to)
+static int add_yx_switch(/* const not checked */ struct extract_state * const es,
+	const int y, const int x, const char * const from, const char * const to)
 {
 	str16_t from_str_i, to_str_i;
 	swidx_t sw_idx;
@@ -1816,7 +1828,8 @@ static int add_yx_switch(struct extract_state *es,
 	RC_RETURN(es->model);
 }
 
-static int extract_iologic_switches(struct extract_state* es, int y, int x)
+static int extract_iologic_switches( /* const not checked */ struct extract_state* const es,
+	const int y, const int x)
 {
 	int row_num, row_pos, bit_in_frame, i, j, rc;
 	uint8_t* minor0_p;
@@ -1874,7 +1887,7 @@ fail:
 	return rc;
 }
 
-static int extract_center_switches(struct extract_state *es)
+static int extract_center_switches(/* const not checked */ struct extract_state * const es)
 {
 	int center_row, center_major, word, i;
 	uint8_t *minor_p;
@@ -1907,8 +1920,9 @@ static int extract_center_switches(struct extract_state *es)
 	RC_RETURN(es->model);
 }
 
-static int write_center_sw(struct fpga_bits *bits,
-	struct fpga_model *model, int y, int x)
+static int write_center_sw( /* const not checked */ struct fpga_bits * const bits,
+	struct fpga_model *const model,
+	const int y, const int x)
 {
 	struct fpga_tile *tile;
 	const char *from_str, *to_str;
@@ -1960,7 +1974,7 @@ static int write_center_sw(struct fpga_bits *bits,
 	RC_RETURN(model);
 }
 
-static int extract_gclk_center_vert_sw(struct extract_state *es)
+static int extract_gclk_center_vert_sw(/* const not checkd */ struct extract_state * const es)
 {
 	int word, cur_row, cur_minor, cur_pin, i, hclk_y;
 	uint8_t *ma0_bits;
@@ -2008,8 +2022,8 @@ static int extract_gclk_center_vert_sw(struct extract_state *es)
 	RC_RETURN(es->model);
 }
 
-static int write_gclk_center_vert_sw(struct fpga_bits *bits,
-	struct fpga_model *model, int y, int x)
+static int write_gclk_center_vert_sw(/* const not checked */ struct fpga_bits * const bits,
+	/* const not checked */ struct fpga_model * const model, const int y, const int x)
 {
 	struct fpga_tile *tile;
 	const char *from_str, *to_str;
@@ -2088,7 +2102,7 @@ static int write_gclk_center_vert_sw(struct fpga_bits *bits,
 	RC_RETURN(model);
 }
 
-static int extract_gclk_hclk_updown_sw(struct extract_state *es)
+static int extract_gclk_hclk_updown_sw(/* const not checked */ struct extract_state * const es)
 {
 	int word, cur_row, x, gclk_pin, hclk_y;
 	uint8_t *mi0_bits;
@@ -2131,8 +2145,9 @@ static int extract_gclk_hclk_updown_sw(struct extract_state *es)
 	RC_RETURN(es->model);
 }
 
-static int write_hclk_sw(struct fpga_bits *bits, struct fpga_model *model,
-	int y, int x)
+static int write_hclk_sw(/* const not checked */ struct fpga_bits * const bits,
+	/* const not checked */ struct fpga_model * const model,
+	const int y, const int x)
 {
 	uint8_t *mi0_bits;
 	struct fpga_tile *tile;
@@ -2170,7 +2185,7 @@ static int write_hclk_sw(struct fpga_bits *bits, struct fpga_model *model,
 	RC_RETURN(model);
 }
 
-static int extract_switches(struct extract_state *es)
+static int extract_switches( /* const not checked */ struct extract_state * const es)
 {
 	int x, y;
 
@@ -2201,8 +2216,8 @@ static int extract_switches(struct extract_state *es)
 	RC_RETURN(es->model);
 }
 
-static int construct_extract_state(struct extract_state* es,
-	struct fpga_model* model)
+static int construct_extract_state( /* not const */ struct extract_state* const es,
+	 /* not const */ struct fpga_model* const model)
 {
 	RC_CHECK(model);
 	memset(es, 0, sizeof(*es));
@@ -2210,7 +2225,8 @@ static int construct_extract_state(struct extract_state* es,
 	return 0;
 }
 
-int extract_model(struct fpga_model* model, struct fpga_bits* bits)
+int extract_model(/* not const? */ struct fpga_model* const model,
+	/* const not checked */ struct fpga_bits* const bits)
 {
 	struct extract_state es;
 	net_idx_t net_idx;
@@ -2246,7 +2262,7 @@ int extract_model(struct fpga_model* model, struct fpga_bits* bits)
 	RC_RETURN(model);
 }
 
-int printf_swbits(struct fpga_model* model)
+int printf_swbits( /* not const */ struct fpga_model* const model)
 {
 	char bit_str[129];
 	int i, j, width;
@@ -2273,7 +2289,8 @@ int printf_swbits(struct fpga_model* model)
 	RC_RETURN(model);
 }
 
-static int find_bitpos(struct fpga_model* model, int y, int x, swidx_t sw)
+static int find_bitpos(/* not const */ struct fpga_model* model,
+	const int y, const int x, const swidx_t sw)
 {
 	enum extra_wires from_w, to_w;
 	const char* from_str, *to_str;
@@ -2306,7 +2323,9 @@ static int find_bitpos(struct fpga_model* model, int y, int x, swidx_t sw)
 	return -1;
 }
 
-static int write_routing_sw(struct fpga_bits* bits, struct fpga_model* model, int y, int x)
+static int write_routing_sw(/* const not checked */ struct fpga_bits* const bits,
+	/* not const */ struct fpga_model* const model,
+	const int y, const int x)
 {
 	struct fpga_tile* tile;
 	int i, bit_pos, rc;
@@ -2338,8 +2357,10 @@ struct str_sw
 	const char* to_str;
 };
 
-static int get_used_switches(struct fpga_model* model, int y, int x,
-	struct str_sw** str_sw, int* num_sw)
+static int get_used_switches(
+	/* const not checked */ struct fpga_model* const model,
+	const int y, const int x,
+	/* not const */ struct str_sw** const str_sw, /* not const */ int* const num_sw)
 {
 	int i, num_used, rc;
 	struct fpga_tile* tile;
@@ -2378,8 +2399,9 @@ fail:
 // pairs in search_sw were found. The found array then contains
 // the indices into str_sw were the matches were made.
 // If not all to-from pairs were found (or none), returns 0.
-static int find_switches(struct iologic_sw_pos* search_sw,
-	struct str_sw* str_sw, int num_str_sw, int (*found)[MAX_IOLOGIC_SWBLOCK])
+static int find_switches(const struct iologic_sw_pos* const search_sw,
+	const struct str_sw* const str_sw, const int num_str_sw,
+	/* not const */ int (*const found)[MAX_IOLOGIC_SWBLOCK])
 {
 	int i, j;
 
@@ -2399,8 +2421,9 @@ static int find_switches(struct iologic_sw_pos* search_sw,
 	return i;
 }
 
-static int write_iologic_sw(struct fpga_bits* bits, struct fpga_model* model,
-	int y, int x)
+static int write_iologic_sw(/* not const */ struct fpga_bits* const bits,
+	/* const not checked */ struct fpga_model* const model,
+	const int y, const int x)
 {
 	int i, j, row_num, row_pos, start_in_frame, rc;
 	struct iologic_sw_pos* sw_pos;
@@ -2463,8 +2486,8 @@ fail:
 	return rc;
 }
 
-static int write_inner_term_sw(struct fpga_bits *bits,
-	struct fpga_model *model, int y, int x)
+static int write_inner_term_sw(/* const not checked */ struct fpga_bits *const bits,
+	/* const not checked */ struct fpga_model *const model, const int y, const int x)
 {
 	struct fpga_tile *tile;
 	const char *from_str, *from_found, *to_str, *to_found;
@@ -2545,8 +2568,9 @@ static int write_inner_term_sw(struct fpga_bits *bits,
 	RC_RETURN(model);
 }
 
-static int write_logic_sw(struct fpga_bits *bits,
-	struct fpga_model *model, int y, int x)
+static int write_logic_sw(/* const not checked */ struct fpga_bits *const bits,
+	/* const not checked */ struct fpga_model *const model,
+	const int y, const int x)
 {
 	struct fpga_tile *tile;
 	const char *from_str, *to_str;
@@ -2590,7 +2614,8 @@ static int write_logic_sw(struct fpga_bits *bits,
 	RC_RETURN(model);
 }
 
-static int write_switches(struct fpga_bits* bits, struct fpga_model* model)
+static int write_switches(/* const not checked */ struct fpga_bits* const bits, 
+	/* const not checked */ struct fpga_model* const model)
 {
 	struct fpga_tile* tile;
 	int x, y, i;
@@ -2660,7 +2685,7 @@ static int write_switches(struct fpga_bits* bits, struct fpga_model* model)
 	RC_RETURN(model);
 }
 
-static int is_latch(struct fpga_device *dev)
+static int is_latch(const struct fpga_device *const dev)
 {
 	int i;
 	// todo: there are a lot more checks we can do to determine whether
@@ -2674,7 +2699,8 @@ static int is_latch(struct fpga_device *dev)
 	return 0;
 }
 
-static int str2lut(uint64_t *lut, int lut_pos, const struct fpgadev_logic_a2d *a2d)
+static int str2lut(/* not const */ uint64_t *const lut,
+	const int lut_pos, const struct fpgadev_logic_a2d *const a2d)
 {
 	int lut6_used, lut5_used, lut_map[64], rc;
 	uint64_t u64;
@@ -2706,7 +2732,8 @@ fail:
 	return rc;
 }
 	
-static int write_logic(struct fpga_bits* bits, struct fpga_model* model)
+static int write_logic(/* const not checked */ struct fpga_bits* const bits,
+	/* const not checked */ struct fpga_model* const model)
 {
 	int dev_idx, row, row_pos, xm_col;
 	int x, y, byte_off, rc;
@@ -3032,7 +3059,8 @@ static int write_logic(struct fpga_bits* bits, struct fpga_model* model)
 	RC_RETURN(model);
 }
 
-int write_model(struct fpga_bits* bits, struct fpga_model* model)
+int write_model(/* const not checked */ struct fpga_bits* const bits,
+	/* const not checked */ struct fpga_model* const model)
 {
 	int i;
 
